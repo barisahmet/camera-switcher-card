@@ -52,6 +52,7 @@ class MotionCameraCard extends LitElement {
         motion_entities: Array.isArray(c.motion_entities)
           ? c.motion_entities
           : [],
+        priority: typeof c.priority === 'number' ? c.priority : 0,
       };
     });
 
@@ -131,6 +132,7 @@ class MotionCameraCard extends LitElement {
         activeCameras.push({
           camera_entity: cameraCfg.camera_entity,
           lastOn: camLastOn,
+          priority: cameraCfg.priority || 0,
         });
       }
     }
@@ -138,8 +140,14 @@ class MotionCameraCard extends LitElement {
     let newActive = this._activeCamera;
 
     if (activeCameras.length > 0) {
-      // En son motion alan kamerayı seç
-      activeCameras.sort((a, b) => a.lastOn - b.lastOn);
+      // Önce priority'ye göre sırala (yüksek priority öncelikli)
+      // Eşit priority'de en son motion alan kamerayı seç
+      activeCameras.sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return a.priority - b.priority; // Yüksek priority sonda olacak
+        }
+        return a.lastOn - b.lastOn; // Eşit priority'de timestamp'e bak
+      });
       newActive = activeCameras[activeCameras.length - 1].camera_entity;
     } else {
       // Hiç motion yok -> ilk kamerayı (default) göster
@@ -334,6 +342,17 @@ class MotionCameraCardEditor extends LitElement {
     this._fireConfigChanged();
   }
 
+  _onPriorityChange(e, index) {
+    const value = parseInt(e.target.value) || 0;
+    const cams = [...this._cameras];
+    cams[index] = {
+      ...cams[index],
+      priority: value,
+    };
+    this._cameras = cams;
+    this._fireConfigChanged();
+  }
+
   _onMotionEntityChange(e, camIndex, motionIndex) {
     const value = e.detail?.value ?? "";
     const cams = [...this._cameras];
@@ -351,7 +370,7 @@ class MotionCameraCardEditor extends LitElement {
   _addCamera() {
     this._cameras = [
       ...(this._cameras || []),
-      { camera_entity: "", motion_entities: [] },
+      { camera_entity: "", motion_entities: [], priority: 0 },
     ];
     this._fireConfigChanged();
   }
@@ -457,6 +476,22 @@ class MotionCameraCardEditor extends LitElement {
                         @value-changed=${(e) =>
                           this._onCameraEntityChange(e, index)}
                       ></ha-selector>
+
+                      <!-- Priority -->
+                      <div class="priority-input">
+                        <label for="priority-${index}">
+                          Priority
+                          <span class="help-text">(Higher values = higher priority)</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="priority-${index}"
+                          .value=${cam.priority || 0}
+                          @input=${(e) => this._onPriorityChange(e, index)}
+                          min="0"
+                          step="1"
+                        />
+                      </div>
 
                       <!-- Motion Entities -->
                       <div class="motion-entities">
@@ -616,6 +651,41 @@ class MotionCameraCardEditor extends LitElement {
         flex-direction: column;
         gap: 16px;
         padding: 16px;
+      }
+
+      .priority-input {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .priority-input label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .priority-input .help-text {
+        font-size: 0.8rem;
+        color: var(--secondary-text-color);
+        font-weight: 400;
+      }
+
+      .priority-input input[type="number"] {
+        padding: 8px 12px;
+        border: 1px solid var(--divider-color);
+        border-radius: 4px;
+        font-size: 1rem;
+        background: var(--card-background-color);
+        color: var(--primary-text-color);
+        width: 100px;
+      }
+
+      .priority-input input[type="number"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
       }
 
       .motion-entities {

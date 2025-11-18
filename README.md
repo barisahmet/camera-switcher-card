@@ -8,8 +8,10 @@ A custom Home Assistant card that displays multiple cameras and automatically sw
 ## Features
 
 - Automatically switch to a camera when its associated binary sensor(s) turn on
-- Priority-based camera selection (first camera with active motion sensor takes precedence)
+- Priority-based camera selection with configurable priority levels
+- Support for multiple motion sensors per camera
 - Clean, modern UI with camera names
+- Visual configuration editor with drag-and-drop support
 
 ## Installation
 
@@ -61,6 +63,7 @@ cameras:
 |------|------|----------|---------|-------------|
 | `camera_entity` | string | yes | - | Entity ID of the camera (e.g., `camera.doorbell`) |
 | `motion_entities` | list | yes | - | List of binary sensor entity IDs for motion/person detection (e.g., `binary_sensor.motion`) |
+| `priority` | number | no | 0 | Priority level for this camera. Higher values = higher priority when multiple cameras detect motion simultaneously |
 
 ### Example Configuration
 
@@ -71,20 +74,35 @@ cameras:
     motion_entities:
       - binary_sensor.front_door_motion
       - binary_sensor.front_door_person_detected
+    priority: 10  # Highest priority - front door is most important
   - camera_entity: camera.back_yard
     motion_entities:
       - binary_sensor.back_yard_motion
+    priority: 5   # Medium priority
   - camera_entity: camera.garage
     motion_entities:
       - binary_sensor.garage_motion
+    priority: 1   # Lower priority
 ```
 
 ## How it Works
 
 1. **Default View**: The card displays the first camera in the list by default
 2. **Motion Detection**: When any binary sensor in a camera's `motion_entities` list turns "on", the card automatically switches to that camera
-3. **Priority**: If multiple cameras have active motion sensors simultaneously, the first one in the list takes priority
+3. **Priority-Based Selection**: When multiple cameras have active motion sensors simultaneously:
+   - Cameras with **higher priority values** are displayed first
+   - If cameras have the **same priority**, the most recently triggered camera is shown
+   - Default priority is 0 if not specified
 4. **Return to Default**: When all motion sensors turn "off", the card returns to displaying the first camera
+
+### Priority Example
+
+If you have three cameras with motion detected simultaneously:
+- `camera.front_door` (priority: 10) - **This camera will be displayed** ✓
+- `camera.back_yard` (priority: 5)
+- `camera.garage` (priority: 1)
+
+The front door camera is shown because it has the highest priority value.
 
 ## Troubleshooting
 
