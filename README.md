@@ -1,6 +1,6 @@
 # Camera Switcher Card
 
-A custom Home Assistant card that displays multiple cameras and automatically switches between them based on binary sensor states (e.g., motion detection, person detection).
+A custom Home Assistant card that displays camera feed and automatically switches between them based on binary sensor states (e.g., motion detection, person detection). Perfect for displaying camera feed on a dashboard tablet when a motion, person or car detected.
 
 ![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/barisahmet/camera-switcher-card)
