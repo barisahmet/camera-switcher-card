@@ -1,4 +1,4 @@
-# Motion Camera Card
+# Camera Switcher Card
 
 A custom Home Assistant card that displays multiple cameras and automatically switches between them based on binary sensor states (e.g., motion detection, person detection).
 
@@ -8,7 +8,8 @@ A custom Home Assistant card that displays multiple cameras and automatically sw
 ## Features
 
 - Automatically switch to a camera when its associated binary sensor(s) turn on
-- Priority-based camera selection (first camera with active motion sensor takes precedence)
+- Configurable priority-based camera selection (cameras with higher priority are shown first when multiple have active motion)
+- When priorities are equal, the most recent motion is prioritized
 - Clean, modern UI with camera names
 
 ## Installation
@@ -25,12 +26,12 @@ A custom Home Assistant card that displays multiple cameras and automatically sw
 
 ### Manual Installation
 
-1. Download `motion-camera-card.js` from the [latest release](https://github.com/barisahmet/camera-switcher-card/releases)
+1. Download `camera-switcher-card.js` from the [latest release](https://github.com/barisahmet/camera-switcher-card/releases)
 2. Copy it to your `config/www/` folder
 3. Add the following to your Lovelace resources (Configuration -> Lovelace Dashboards -> Resources):
 
 ```yaml
-url: /local/motion-camera-card.js
+url: /local/camera-switcher-card.js
 type: module
 ```
 
@@ -39,7 +40,7 @@ type: module
 Add the card to your Lovelace dashboard:
 
 ```yaml
-type: custom:motion-camera-card
+type: custom:camera-switcher-card
 cameras:
   - camera_entity: camera.doorbell
     motion_entities:
@@ -61,29 +62,37 @@ cameras:
 |------|------|----------|---------|-------------|
 | `camera_entity` | string | yes | - | Entity ID of the camera (e.g., `camera.doorbell`) |
 | `motion_entities` | list | yes | - | List of binary sensor entity IDs for motion/person detection (e.g., `binary_sensor.motion`) |
+| `priority` | number | no | 0 | Priority value for the camera. Higher values take precedence when multiple cameras have active motion. |
 
 ### Example Configuration
 
 ```yaml
-type: custom:motion-camera-card
+type: custom:camera-switcher-card
 cameras:
   - camera_entity: camera.front_door
     motion_entities:
       - binary_sensor.front_door_motion
       - binary_sensor.front_door_person_detected
+    priority: 10
   - camera_entity: camera.back_yard
     motion_entities:
       - binary_sensor.back_yard_motion
+    priority: 5
   - camera_entity: camera.garage
     motion_entities:
       - binary_sensor.garage_motion
+    priority: 0
 ```
+
+In this example, if motion is detected on multiple cameras simultaneously, the front door camera (priority 10) will be shown first, followed by the back yard (priority 5), and finally the garage (priority 0).
 
 ## How it Works
 
 1. **Default View**: The card displays the first camera in the list by default
 2. **Motion Detection**: When any binary sensor in a camera's `motion_entities` list turns "on", the card automatically switches to that camera
-3. **Priority**: If multiple cameras have active motion sensors simultaneously, the first one in the list takes priority
+3. **Priority-Based Selection**: If multiple cameras have active motion sensors simultaneously:
+   - Cameras with higher `priority` values are shown first
+   - If priorities are equal, the camera with the most recent motion is shown
 4. **Return to Default**: When all motion sensors turn "off", the card returns to displaying the first camera
 
 ## Troubleshooting

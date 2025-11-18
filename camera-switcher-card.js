@@ -4,7 +4,7 @@ import {
   css,
 } from "https://unpkg.com/lit-element@2.4.0/lit-element.js?module";
 
-class MotionCameraCard extends LitElement {
+class CameraSwitcherCard extends LitElement {
   static get properties() {
     return {
       hass: {},
@@ -27,13 +27,14 @@ class MotionCameraCard extends LitElement {
         {
           camera_entity: first,
           motion_entities: [],
+          priority: 0,
         },
       ],
     };
   }
 
   static async getConfigElement() {
-    return document.createElement("motion-camera-card-editor");
+    return document.createElement("camera-switcher-card-editor");
   }
   // ---------------------------------------------
 
@@ -52,6 +53,7 @@ class MotionCameraCard extends LitElement {
         motion_entities: Array.isArray(c.motion_entities)
           ? c.motion_entities
           : [],
+        priority: typeof c.priority === 'number' ? c.priority : 0,
       };
     });
 
@@ -130,6 +132,7 @@ class MotionCameraCard extends LitElement {
       if (camIsActive) {
         activeCameras.push({
           camera_entity: cameraCfg.camera_entity,
+          priority: cameraCfg.priority || 0,
           lastOn: camLastOn,
         });
       }
@@ -138,9 +141,14 @@ class MotionCameraCard extends LitElement {
     let newActive = this._activeCamera;
 
     if (activeCameras.length > 0) {
-      // En son motion alan kamerayı seç
-      activeCameras.sort((a, b) => a.lastOn - b.lastOn);
-      newActive = activeCameras[activeCameras.length - 1].camera_entity;
+      // Sort by priority (descending), then by lastOn (descending)
+      activeCameras.sort((a, b) => {
+        if (b.priority !== a.priority) {
+          return b.priority - a.priority;
+        }
+        return b.lastOn - a.lastOn;
+      });
+      newActive = activeCameras[0].camera_entity;
     } else {
       // Hiç motion yok -> ilk kamerayı (default) göster
       newActive = cfg.cameras[0].camera_entity;
@@ -262,12 +270,12 @@ class MotionCameraCard extends LitElement {
   }
 }
 
-if (!customElements.get("motion-camera-card")) {
-  customElements.define("motion-camera-card", MotionCameraCard);
+if (!customElements.get("camera-switcher-card")) {
+  customElements.define("camera-switcher-card", CameraSwitcherCard);
 }
 
 // ---------- GUI EDITÖR SINIFI (Modern ha-selector kullanımı) ----------
-class MotionCameraCardEditor extends LitElement {
+class CameraSwitcherCardEditor extends LitElement {
   static get properties() {
     return {
       hass: {},
@@ -334,6 +342,17 @@ class MotionCameraCardEditor extends LitElement {
     this._fireConfigChanged();
   }
 
+  _onPriorityChange(e, index) {
+    const value = parseInt(e.target.value, 10);
+    const cams = [...this._cameras];
+    cams[index] = {
+      ...cams[index],
+      priority: isNaN(value) ? 0 : value,
+    };
+    this._cameras = cams;
+    this._fireConfigChanged();
+  }
+
   _onMotionEntityChange(e, camIndex, motionIndex) {
     const value = e.detail?.value ?? "";
     const cams = [...this._cameras];
@@ -351,7 +370,7 @@ class MotionCameraCardEditor extends LitElement {
   _addCamera() {
     this._cameras = [
       ...(this._cameras || []),
-      { camera_entity: "", motion_entities: [] },
+      { camera_entity: "", motion_entities: [], priority: 0 },
     ];
     this._fireConfigChanged();
   }
@@ -457,6 +476,21 @@ class MotionCameraCardEditor extends LitElement {
                         @value-changed=${(e) =>
                           this._onCameraEntityChange(e, index)}
                       ></ha-selector>
+
+                      <!-- Priority -->
+                      <div class="priority-field">
+                        <label for="priority-${index}">
+                          Priority (higher = more important)
+                        </label>
+                        <input
+                          type="number"
+                          id="priority-${index}"
+                          .value=${cam.priority || 0}
+                          @input=${(e) => this._onPriorityChange(e, index)}
+                          min="0"
+                          step="1"
+                        />
+                      </div>
 
                       <!-- Motion Entities -->
                       <div class="motion-entities">
@@ -618,6 +652,32 @@ class MotionCameraCardEditor extends LitElement {
         padding: 16px;
       }
 
+      .priority-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .priority-field label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--primary-text-color);
+      }
+
+      .priority-field input {
+        padding: 8px 12px;
+        border: 1px solid var(--divider-color);
+        border-radius: 4px;
+        background: var(--card-background-color);
+        color: var(--primary-text-color);
+        font-size: 0.9rem;
+      }
+
+      .priority-field input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+      }
+
       .motion-entities {
         display: flex;
         flex-direction: column;
@@ -682,15 +742,15 @@ class MotionCameraCardEditor extends LitElement {
   }
 }
 
-if (!customElements.get("motion-camera-card-editor")) {
-  customElements.define("motion-camera-card-editor", MotionCameraCardEditor);
+if (!customElements.get("camera-switcher-card-editor")) {
+  customElements.define("camera-switcher-card-editor", CameraSwitcherCardEditor);
 }
 
 // Card picker için metadata
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: "motion-camera-card",
-  name: "Motion Camera Switcher",
+  type: "camera-switcher-card",
+  name: "Camera Switcher Card",
   description:
     "Shows the last camera where motion was detected. Feed it camera + motion entities.",
 });
