@@ -1,5 +1,5 @@
 {
-  "name": "Motion Camera Card",
+  "name": "Camera Switcher Card",
   "render_readme": true,
-  "filename": "motion-camera-card.js"
+  "filename": "camera-switcher-card.js"
 }

@@ -4,7 +4,7 @@ import {
   css,
 } from "https://unpkg.com/lit-element@2.4.0/lit-element.js?module";
 
-class MotionCameraCard extends LitElement {
+class CameraSwitcherCard extends LitElement {
   static get properties() {
     return {
       hass: {},
@@ -33,7 +33,7 @@ class MotionCameraCard extends LitElement {
   }
 
   static async getConfigElement() {
-    return document.createElement("motion-camera-card-editor");
+    return document.createElement("camera-switcher-card-editor");
   }
   // ---------------------------------------------
 
@@ -262,12 +262,12 @@ class MotionCameraCard extends LitElement {
   }
 }
 
-if (!customElements.get("motion-camera-card")) {
-  customElements.define("motion-camera-card", MotionCameraCard);
+if (!customElements.get("camera-switcher-card")) {
+  customElements.define("camera-switcher-card", CameraSwitcherCard);
 }
 
 // ---------- GUI EDITÖR SINIFI (Modern ha-selector kullanımı) ----------
-class MotionCameraCardEditor extends LitElement {
+class CameraSwitcherCardEditor extends LitElement {
   static get properties() {
     return {
       hass: {},
@@ -682,15 +682,15 @@ class MotionCameraCardEditor extends LitElement {
   }
 }
 
-if (!customElements.get("motion-camera-card-editor")) {
-  customElements.define("motion-camera-card-editor", MotionCameraCardEditor);
+if (!customElements.get("camera-switcher-card-editor")) {
+  customElements.define("camera-switcher-card-editor", CameraSwitcherCardEditor);
 }
 
 // Card picker için metadata
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: "motion-camera-card",
-  name: "Motion Camera Switcher",
+  type: "camera-switcher-card",
+  name: "Camera Switcher Card",
   description:
     "Shows the last camera where motion was detected. Feed it camera + motion entities.",
 });

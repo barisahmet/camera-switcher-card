@@ -1,4 +1,4 @@
-# Motion Camera Card
+# Camera Switcher Card
 
 A custom Home Assistant card that displays multiple cameras and automatically switches between them based on binary sensor states (e.g., motion detection, person detection).
 
@@ -24,13 +24,13 @@ A custom Home Assistant card that displays multiple cameras and automatically sw
 
 ### Manual Installation
 
-1. Download `motion-camera-card.js` from the latest release
+1. Download `camera-switcher-card.js` from the latest release
 2. Copy it to `config/www/` folder
 3. Add the following to your Lovelace resources:
 
 ```yaml
 resources:
-  - url: /local/motion-camera-card.js
+  - url: /local/camera-switcher-card.js
     type: module
 ```
 
@@ -39,7 +39,7 @@ resources:
 Add the card to your Lovelace dashboard:
 
 ```yaml
-type: custom:motion-camera-card
+type: custom:camera-switcher-card
 cameras:
   - camera_entity: camera.doorbell
     motion_entities:
