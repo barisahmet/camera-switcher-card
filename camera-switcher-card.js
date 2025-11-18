@@ -27,6 +27,7 @@ class CameraSwitcherCard extends LitElement {
         {
           camera_entity: first,
           motion_entities: [],
+          priority: 0,
         },
       ],
     };
@@ -52,6 +53,7 @@ class CameraSwitcherCard extends LitElement {
         motion_entities: Array.isArray(c.motion_entities)
           ? c.motion_entities
           : [],
+        priority: typeof c.priority === 'number' ? c.priority : 0,
       };
     });
 
@@ -130,6 +132,7 @@ class CameraSwitcherCard extends LitElement {
       if (camIsActive) {
         activeCameras.push({
           camera_entity: cameraCfg.camera_entity,
+          priority: cameraCfg.priority || 0,
           lastOn: camLastOn,
         });
       }
@@ -138,9 +141,14 @@ class CameraSwitcherCard extends LitElement {
     let newActive = this._activeCamera;
 
     if (activeCameras.length > 0) {
-      // En son motion alan kamerayı seç
-      activeCameras.sort((a, b) => a.lastOn - b.lastOn);
-      newActive = activeCameras[activeCameras.length - 1].camera_entity;
+      // Sort by priority (descending), then by lastOn (descending)
+      activeCameras.sort((a, b) => {
+        if (b.priority !== a.priority) {
+          return b.priority - a.priority;
+        }
+        return b.lastOn - a.lastOn;
+      });
+      newActive = activeCameras[0].camera_entity;
     } else {
       // Hiç motion yok -> ilk kamerayı (default) göster
       newActive = cfg.cameras[0].camera_entity;
@@ -334,6 +342,17 @@ class CameraSwitcherCardEditor extends LitElement {
     this._fireConfigChanged();
   }
 
+  _onPriorityChange(e, index) {
+    const value = parseInt(e.target.value, 10);
+    const cams = [...this._cameras];
+    cams[index] = {
+      ...cams[index],
+      priority: isNaN(value) ? 0 : value,
+    };
+    this._cameras = cams;
+    this._fireConfigChanged();
+  }
+
   _onMotionEntityChange(e, camIndex, motionIndex) {
     const value = e.detail?.value ?? "";
     const cams = [...this._cameras];
@@ -351,7 +370,7 @@ class CameraSwitcherCardEditor extends LitElement {
   _addCamera() {
     this._cameras = [
       ...(this._cameras || []),
-      { camera_entity: "", motion_entities: [] },
+      { camera_entity: "", motion_entities: [], priority: 0 },
     ];
     this._fireConfigChanged();
   }
@@ -457,6 +476,21 @@ class CameraSwitcherCardEditor extends LitElement {
                         @value-changed=${(e) =>
                           this._onCameraEntityChange(e, index)}
                       ></ha-selector>
+
+                      <!-- Priority -->
+                      <div class="priority-field">
+                        <label for="priority-${index}">
+                          Priority (higher = more important)
+                        </label>
+                        <input
+                          type="number"
+                          id="priority-${index}"
+                          .value=${cam.priority || 0}
+                          @input=${(e) => this._onPriorityChange(e, index)}
+                          min="0"
+                          step="1"
+                        />
+                      </div>
 
                       <!-- Motion Entities -->
                       <div class="motion-entities">
@@ -616,6 +650,32 @@ class CameraSwitcherCardEditor extends LitElement {
         flex-direction: column;
         gap: 16px;
         padding: 16px;
+      }
+
+      .priority-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .priority-field label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--primary-text-color);
+      }
+
+      .priority-field input {
+        padding: 8px 12px;
+        border: 1px solid var(--divider-color);
+        border-radius: 4px;
+        background: var(--card-background-color);
+        color: var(--primary-text-color);
+        font-size: 0.9rem;
+      }
+
+      .priority-field input:focus {
+        outline: none;
+        border-color: var(--primary-color);
       }
 
       .motion-entities {
